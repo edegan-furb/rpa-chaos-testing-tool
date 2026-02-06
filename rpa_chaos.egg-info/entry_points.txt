@@ -1,0 +1,2 @@
+[console_scripts]
+rpa-chaos = chaos.runner:app
