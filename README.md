@@ -31,19 +31,19 @@ playwright install
 Run a bot multiple times with chaos enabled:
 
 ```bash
-rpa-chaos run examples.demo_bot:run --runs 5 --headless
+rpa-chaos examples.demo_bot:run --runs 5 --headless
 ```
 
 Disable chaos for a clean baseline:
 
 ```bash
-rpa-chaos run examples.demo_bot:run --runs 3 --no-chaos
+rpa-chaos examples.demo_bot:run --runs 3 --no-chaos
 ```
 
 Open a URL before your bot runs (useful when your bot expects a starting page):
 
 ```bash
-rpa-chaos run examples.demo_bot:run --base-url https://example.com
+rpa-chaos examples.demo_bot:run --base-url https://example.com
 ```
 
 ## Writing a Bot
