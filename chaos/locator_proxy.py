@@ -1,7 +1,15 @@
 from __future__ import annotations
 from typing import Any, Callable
 
+
 class LocatorProxy:
+    """
+    Thin wrapper around Playwright `Locator`.
+
+    It mirrors locator actions and runs chaos hooks before/after each action.
+    This lets experiments affect `page.get_by_...(...).click()` style flows too.
+    """
+
     def __init__(self, locator, before_hook: Callable, after_hook: Callable):
         self._loc = locator
         self._before = before_hook
@@ -36,4 +44,5 @@ class LocatorProxy:
             self._after("press", args, kwargs)
 
     def __getattr__(self, name: str) -> Any:
+        # Delegate all non-intercepted Locator APIs unchanged.
         return getattr(self._loc, name)
