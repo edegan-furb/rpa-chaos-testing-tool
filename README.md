@@ -82,7 +82,3 @@ Run the CLI directly with Python:
 ```bash
 python -m chaos.runner run examples.demo_bot:run
 ```
-
-## License
-
-MIT (add your license text here if needed).
