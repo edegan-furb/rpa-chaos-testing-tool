@@ -8,11 +8,18 @@ from typing import Optional, Callable, Dict, Any
 
 @dataclass
 class ChaosEvent:
+    """One recorded chaos action (what happened + metadata)."""
     kind: str
     detail: Dict[str, Any]
 
 
 class ChaosContext:
+    """
+    Shared state passed to every experiment during a run.
+
+    - `rng` keeps behavior deterministic for a given seed.
+    - `events` is an in-memory log used by the CLI summary/reporting.
+    """
     def __init__(self, rng: random.Random):
         self.rng = rng
         self.events: list[ChaosEvent] = []
@@ -22,7 +29,14 @@ class ChaosContext:
 
 
 class Experiment:
-    """Interface for chaos experiments."""
+    """
+    Interface/base class for chaos experiments.
+
+    Experiments can hook into three moments:
+    - `on_start`: once right after the browser/page are created.
+    - `before_action`: before a tracked Playwright action.
+    - `after_action`: after a tracked Playwright action.
+    """
     name: str = "experiment"
 
     def before_action(self, ctx: ChaosContext, page, action: str, args, kwargs) -> None:
@@ -44,6 +58,7 @@ class RandomDelay(Experiment):
         self.p = probability
 
     def before_action(self, ctx: ChaosContext, page, action: str, args, kwargs) -> None:
+        # Probability gate: only delay some actions if p < 1.0.
         if ctx.rng.random() <= self.p:
             d = ctx.rng.uniform(self.min_s, self.max_s)
             ctx.emit(self.name, action=action, delay_s=round(d, 3))
@@ -108,6 +123,8 @@ class ModalOverlay(Experiment):
         }
         """
         try:
+            # Injecting JavaScript directly into the page DOM is the simplest
+            # way to mimic a temporary blocking modal.
             page.evaluate(js, dur_ms)
         except Exception:
             # If page isn't ready for eval, ignore this injection.
@@ -147,7 +164,8 @@ class NetworkChaos(Experiment):
         self._cdp = None
 
     def on_start(self, ctx: ChaosContext, page, browser_context) -> None:
-        # Create CDP session (Chromium only)
+        # Create CDP session (Chromium only). If this fails we silently disable
+        # network chaos and let other experiments keep working.
         try:
             self._cdp = browser_context.new_cdp_session(page)
             self._cdp.send("Network.enable")
@@ -155,6 +173,7 @@ class NetworkChaos(Experiment):
             self._cdp = None
 
     def before_action(self, ctx: ChaosContext, page, action: str, args, kwargs) -> None:
+        # CDP was unavailable at startup (likely non-Chromium): no-op.
         if self._cdp is None:
             return
 
@@ -223,4 +242,6 @@ class NetworkChaos(Experiment):
                     },
                 )
             except Exception:
+                # If a CDP call fails mid-run, continue the test instead of
+                # failing the whole bot execution for the chaos layer.
                 pass
