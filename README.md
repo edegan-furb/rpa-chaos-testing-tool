@@ -1,5 +1,9 @@
 # RPA Chaos Testing Tool
 
+<p align="center">
+  <img src="images/git-image-preview.png" width="600">
+</p>
+
 RPA Chaos is a lightweight Python CLI for running Playwright-based RPA bots under
 repeatable chaos conditions. It wraps Playwright pages with hooks that can inject
 random delays, modal overlays, and network throttling/offline bursts so you can
